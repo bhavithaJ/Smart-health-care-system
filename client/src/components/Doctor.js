@@ -8,7 +8,7 @@ import { Buffer } from 'buffer';
 import { Link } from 'react-router-dom'
 
 
-const Doctor = ({ipfs, mediChain, account}) => {
+const Doctor = ({ipfs, SmartH, account}) => {
   const [doctor, setDoctor] = useState(null);
   const [patient, setPatient] = useState(null);
   const [patientRecord, setPatientRecord] = useState(null);
@@ -22,26 +22,26 @@ const Doctor = ({ipfs, mediChain, account}) => {
   const [transactionsList, setTransactionsList] = useState([]);
 
   const getDoctorData = async () => {
-    var doctor = await mediChain.methods.doctorInfo(account).call();
+    var doctor = await SmartH.methods.doctorInfo(account).call();
     setDoctor(doctor);
   }
   const getPatientAccessList = async () => {
-    var pat = await mediChain.methods.getDoctorPatientList(account).call();
+    var pat = await SmartH.methods.getDoctorPatientList(account).call();
     let pt = []
     for(let i=0; i<pat.length; i++){
-      let patient = await mediChain.methods.patientInfo(pat[i]).call();
+      let patient = await SmartH.methods.patientInfo(pat[i]).call();
       patient = { ...patient, account:pat[i] }
       pt = [...pt, patient]
     }
     setPatList(pt);
   }
   const getTransactionsList = async () => {
-    var transactionsIdList = await mediChain.methods.getDoctorTransactions(account).call();
+    var transactionsIdList = await SmartH.methods.getDoctorTransactions(account).call();
     let tr = [];
     for(let i=transactionsIdList.length-1; i>=0; i--){
-        let transaction = await mediChain.methods.transactions(transactionsIdList[i]).call();
-        let sender = await mediChain.methods.patientInfo(transaction.sender).call();
-        if(!sender.exists) sender = await mediChain.methods.insurerInfo(transaction.sender).call();
+        let transaction = await SmartH.methods.transactions(transactionsIdList[i]).call();
+        let sender = await SmartH.methods.patientInfo(transaction.sender).call();
+        if(!sender.exists) sender = await SmartH.methods.insurerInfo(transaction.sender).call();
         transaction = {...transaction, id: transactionsIdList[i], senderEmail: sender.email}
         tr = [...tr, transaction];
     }
@@ -106,7 +106,7 @@ const Doctor = ({ipfs, mediChain, account}) => {
         console.log(error);
         return;
       }else{
-        mediChain.methods.insuranceClaimRequest(patient.account, result.path, charges).send({from: account}).on('transactionHash', (hash) => {
+        SmartH.methods.insuranceClaimRequest(patient.account, result.path, charges).send({from: account}).on('transactionHash', (hash) => {
           return window.location.href = '/login'
         })
       }
